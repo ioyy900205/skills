@@ -50,9 +50,43 @@ cp -r skills/experiment-briefing ~/.claude/skills/
 
 体检脚本需要 playwright：`npm i playwright && npx playwright install chromium`。
 
+### [`update-agent-clis`](update-agent-clis/)
+
+更新本机的 agent CLI 工具（Claude Code、Codex、Gemini CLI、dsh 等）——**镜像优先，先探测再动手**。
+国内直连 `registry.npmjs.org` 实测约 40 KB/s，而带原生二进制的 agent CLI 动辄上百 MB，
+选错源就是几十分钟的事。
+
+固化的做法：
+
+- **先探测，不急着装。** 先跑只读脚本得到一张表，标着 `已最新` 的工具绝不重装——
+  重装 codex 意味着白下 135 MB，换来的收益是零，还平白引入一次命令失效窗口。
+- **镜像按命令传参，不写全局配置。** `--registry=https://registry.npmmirror.com`
+  只作用于当次安装，不动 `~/.npmrc`，其它 npm 工作流（公司私有源之类）不受影响。
+  换源前先核对两边的 shasum 一致，确认是同一份文件。
+- **装到一半绝不 kill。** npm 的 reify 阶段会先删掉旧版 bin 软链、再放新的，
+  中断会让 CLI 命令直接消失。卡住时别猜，去看缓存临时文件的字节数是否在涨——
+  在涨就是在下载，等着。
+- **不用 `claude update` 更新 npm 装的 claude。** 它会把 `~/.local/bin/claude`
+  这种软链误判成第二份独立的 native 安装，可能装出双份来打架。
+- **装完必须验。** 只看 npm 的输出不够：跑 `--version`，再核对 bin 软链时间戳，
+  确认没被同一次安装波及。
+
+自带的工具：
+
+| 文件 | 作用 |
+|---|---|
+| `scripts/check_agents.py` | 只读探测：当前版本、最新版本、安装方式、建议升级命令。从二进制的真实路径反推包名，比硬编码映射表可信 |
+
+只依赖 python3 和标准库，不需要额外安装。
+
 ## 来历
 
 这些 skill 是从真实项目里长出来的，不是凭空设计的——规矩基本对应踩过的坑。
 例如"强制主题"那条体检，来自一次真实缺陷：暗色样式只写在
 `@media (prefers-color-scheme: dark)` 里时，切换按钮只能强制亮、不能强制暗，
 而后者恰好是亮色笔记本的读者会碰到的方向。
+
+`update-agent-clis` 同理。它成文于一次更新 codex 的过程：官方源下到 65 MB 时
+估算还要 40 分钟，换镜像后 20 秒装完——于是"镜像优先"成了第一原则。而"绝不中断
+安装"那条是被吓出来的：下载那十几分钟里 `codex` 命令其实是消失状态，因为 npm
+已经先删了旧软链。当时没中断是运气，"不要中断"是事后才想明白的道理。
