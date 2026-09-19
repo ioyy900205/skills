@@ -22,6 +22,7 @@ cp -r skills/experiment-briefing ~/.claude/skills/
 
 把实验、评测、分析的结果做成一页汇报 HTML——**同时给领导和给自己看**。
 领导三十秒要拿到结论，自己三个月后要能追溯每个数字怎么来的，靠分层解决。
+主 `SKILL.md` 只保留触发边界、执行主线和硬规则；细节拆进 `references/` 按需读取，避免每次调用都加载整套说明。
 
 固化的做法：
 
@@ -42,6 +43,8 @@ cp -r skills/experiment-briefing ~/.claude/skills/
 | `assets/report_template.py` | 生成器骨架，拷走换掉 `MARKER` 就能跑 |
 | `assets/report_html.py` | 设计系统、图片内嵌、表格、主题切换 |
 | `assets/charts.py` | 内联 SVG 折线图与二维热图，亮暗两套已验证色阶 |
+| `references/` | 按需加载的页面结构、证据强度、交付与验证细则 |
+| `evals/evals.json` | 真实任务场景，用于后续回归测试 skill 行为 |
 | `scripts/check_page.cjs` | 渲染体检：溢出、外链、tab 失效、暗色对比度、强制主题、JS 报错 |
 | `scripts/serve_report.sh` | 开端口分享，只绑单网卡、只发布报告目录、只读 |
 
