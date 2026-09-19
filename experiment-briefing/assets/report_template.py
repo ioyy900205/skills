@@ -30,18 +30,33 @@ VARIANTS = [('baseline', '基线'), ('treatment', '改动后')]
 # --- data -------------------------------------------------------------------
 
 def load(directory):
-    """Everything the page needs, read once."""
-    run = {'dir': Path(directory)}
+    """Everything the page needs, read once; fail early on missing core data."""
+    directory = Path(directory)
+    if not directory.is_dir():
+        raise FileNotFoundError(f'run directory not found: {directory}')
+
+    run = {'dir': directory}
     for name in ('config', 'summary'):        # MARKER: your run's files
-        path = Path(directory)/f'{name}.json'
+        path = directory/f'{name}.json'
         if path.exists():
-            run[name] = json.loads(path.read_text())
+            run[name] = json.loads(path.read_text(encoding='utf-8'))
+
+    if 'summary' not in run:
+        raise FileNotFoundError(
+            f'missing {directory / "summary.json"}; create a structured summary before building the report')
+    if not isinstance(run['summary'], dict):
+        raise ValueError('summary.json must contain a JSON object')
     return run
 
 
 def variants_of(run):
-    """Only the configurations this run actually produced."""
-    return [(k, n) for k, n in VARIANTS if k in run.get('summary', {})]
+    """Only the configurations this run actually produced; fail on schema drift."""
+    got = [(k, n) for k, n in VARIANTS if k in run['summary']]
+    if not got:
+        expected = ', '.join(k for k, _ in VARIANTS)
+        raise ValueError(
+            f'none of the expected variants ({expected}) exist in summary.json; update VARIANTS')
+    return got
 
 
 def metric(run, variant, cell, key):
@@ -92,9 +107,12 @@ def panels(run, render, key='variant'):
 
 
 def figure_block(path, caption):
-    """Inlined, so the page stays one file. Missing figure degrades to nothing."""
-    return ('' if not Path(path).exists() else
-            f'<figure><img loading="lazy" src="{embed(path)}" alt="{escape(caption)}">'
+    """Inline figures; show missing evidence explicitly instead of hiding it."""
+    if not Path(path).exists():
+        return (f'<figure class="missing-figure">'
+                f'<div class="figure-missing" role="note">未生成 / 缺失：{escape(caption)}</div>'
+                f'<figcaption>{escape(caption)}</figcaption></figure>')
+    return (f'<figure><img loading="lazy" src="{embed(path)}" alt="{escape(caption)}">'
             f'<figcaption>{escape(caption)}</figcaption></figure>')
 
 
