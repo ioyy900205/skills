@@ -4,22 +4,37 @@
     {
       "id": 1,
       "prompt": "我刚跑完一批无人机检测实验，结果都在 runs/mix_overlap_0920/。给我做一个领导能快速看懂的 HTML 汇报页，必须把所有 SNR 和源数量条件都放进去，失败条件也别藏。",
-      "expected_output": "Inspect structured run outputs, derive all report numbers from data, generate an HTML briefing with conclusion-first hero, complete condition coverage, explicit failures/limitations, README, and CSV/JSON export."
+      "expected_output": "Inspect structured run outputs, derive report numbers from data, run basic analytical QA, and generate an HTML briefing with conclusion-first hero, complete condition coverage, explicit failures/limitations, README, and data export."
     },
     {
       "id": 2,
       "prompt": "把这轮语音增强评测做成一个网页，除了 WER/PESQ/STOI，我还想放几组原始/增强音频让别人直接试听，并且给同事一个可以访问的端口。",
-      "expected_output": "Produce an HTML + media-assets report rather than base64-embedding large audio, use preload=none, include metric provenance and caveats, validate the page, and only then serve the report directory on a constrained interface/port."
+      "expected_output": "Produce HTML + media assets rather than embedding large audio, use preload=none, include metric provenance/caveats, check for sensitive information, validate the page, and only then serve the report directory on a constrained interface."
     },
     {
       "id": 3,
       "prompt": "现在这个 results/report/index.html 太难看，也容易让人误解。帮我重做，尤其要把‘没跑成’和‘跑了但是 0 分’分开，同时说明哪些失败是输入本身不可区分。",
-      "expected_output": "Locate the generator rather than hand-editing generated HTML, preserve data provenance, visually distinguish missing/not-run from zero-score conditions, and separate information limits from model limitations."
+      "expected_output": "Locate the generator rather than hand-editing generated HTML, preserve provenance, distinguish missing/not-run from zero-score conditions, and separate information limits from model limitations."
     },
     {
       "id": 4,
       "prompt": "我做了 baseline、Ablation-A、Ablation-B 三组实验。A 去掉后掉 8%，B 去掉后掉 6%。帮我做一页 dashboard 给老板看，顺便解释主要问题来源。",
-      "expected_output": "Build the dashboard while avoiding additive causal attribution from separate ablations; state what each intervention shows, identify evidence strength, and avoid claiming A+B explains 14% unless a valid decomposition supports it."
+      "expected_output": "Build the dashboard while avoiding additive causal attribution from separate ablations; state what each intervention shows and do not claim A+B explains 14% unless a valid decomposition supports it."
+    },
+    {
+      "id": 5,
+      "prompt": "把我们无人机项目最近一个月做成一个阶段总结网页给领导看。我们做了真实数据标注、TorchSig baseline、混合源实验和边界修正，但真实设备测试还没开始。下一步也帮我整理出来。",
+      "expected_output": "Use project-status mode: separate goal, completed work, verified outcomes, current gaps, risks/dependencies, open questions, next actions and any real asks. Do not describe unfinished real-device testing as completed and distinguish outputs from outcomes."
+    },
+    {
+      "id": 6,
+      "prompt": "这个项目本来计划两周把自动标注做好，最后用了一个月。帮我做一次复盘页面。我怀疑主要是标注规则不清楚，但没有严格实验验证。行动项里负责人和日期我还没定。",
+      "expected_output": "Use retrospective mode with planned-vs-actual, timeline only if useful, what worked/didn't, contributing factors rather than an unsupported root cause, and action items with owner/due marked TBC instead of invented."
+    },
+    {
+      "id": 7,
+      "prompt": "给老板做一页项目汇报：目前两个方案 A/B 都能跑，A 准确率高但慢，B 快但精度低。真实场景数据还不够。我需要老板决定下个月优先补数据还是继续优化模型。",
+      "expected_output": "Use decision-brief mode: lead with current state and the concrete decision needed, show evidence and trade-offs, clearly flag insufficient real-world data as an open question, and avoid pretending the available evidence resolves the choice."
     }
   ]
 }
