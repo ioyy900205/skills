@@ -132,6 +132,8 @@ figure{margin:0;background:var(--card);border:1px solid var(--line);border-radiu
 padding:12px;overflow:hidden}
 figure img{width:100%;display:block;border-radius:6px}
 figcaption{font-size:13px;color:var(--muted);padding:10px 6px 2px}
+.figure-missing{min-height:180px;display:grid;place-items:center;padding:24px;text-align:center;
+color:var(--muted);border:1px dashed var(--line);border-radius:6px;background:var(--paper)}
 table.data{width:100%;border-collapse:collapse;font-size:14px;background:var(--card);
 border:1px solid var(--line);border-radius:12px;overflow:hidden;font-variant-numeric:tabular-nums}
 table.data caption{caption-side:top;text-align:left;font-size:12.5px;color:var(--muted);

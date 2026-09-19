@@ -20,8 +20,9 @@ cp -r skills/experiment-briefing ~/.claude/skills/
 
 ### [`experiment-briefing`](experiment-briefing/)
 
-把实验、评测、分析的结果做成一页汇报 HTML——**同时给领导和给自己看**。
-领导三十秒要拿到结论，自己三个月后要能追溯每个数字怎么来的，靠分层解决。
+把实验、评测、分析结果和项目阶段成果做成一页可追溯的汇报 HTML——**同时给领导和给自己看**。
+除了实验结果页，也覆盖项目 status、阶段总结、复盘和 decision brief；领导三十秒拿到结论/状态，自己三个月后仍能追溯每个数字和判断。
+主 `SKILL.md` 只保留触发边界、执行主线和硬规则；细节拆进 `references/` 按需读取，避免每次调用都加载整套说明。
 
 固化的做法：
 
@@ -33,7 +34,8 @@ cp -r skills/experiment-briefing ~/.claude/skills/
   区分"原理上做不到"和"能改进"——不写清楚，读者会把物理极限记成缺陷。
 - **分清证据强度。** 恒等式拆分能说"占多少"，消融只能说"改掉它会怎样"，
   后者横着加不起来，不能并排写成一条因果链。
-- **交付一个目录**：页面 + README（起因、重跑命令、体积、与上版差别）+ 数据导出（CSV/JSON）。
+- **项目汇报也不猜。** 进展、状态、风险、owner、日期和决策都要有来源；未知就显式 TBC/Open Question。
+- **交付一个目录**：页面 + README（起因、来源/as-of、重跑命令、体积、与上版差别）+ 可用的数据导出（CSV/JSON）。
 
 自带的工具：
 
@@ -42,6 +44,8 @@ cp -r skills/experiment-briefing ~/.claude/skills/
 | `assets/report_template.py` | 生成器骨架，拷走换掉 `MARKER` 就能跑 |
 | `assets/report_html.py` | 设计系统、图片内嵌、表格、主题切换 |
 | `assets/charts.py` | 内联 SVG 折线图与二维热图，亮暗两套已验证色阶 |
+| `references/` | 按需加载的页面结构、项目总结/复盘、证据强度、分析 QA、交付与验证细则 |
+| `evals/evals.json` | 真实任务场景，用于后续回归测试 skill 行为 |
 | `scripts/check_page.cjs` | 渲染体检：溢出、外链、tab 失效、暗色对比度、强制主题、JS 报错 |
 | `scripts/serve_report.sh` | 开端口分享，只绑单网卡、只发布报告目录、只读 |
 
