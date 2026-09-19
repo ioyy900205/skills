@@ -41,8 +41,10 @@ done
 # Default host: the address of the route to the outside, i.e. the interface a
 # colleague on the lab network can actually reach. Falls back to loopback.
 default_host() {
-  local ip
-  ip="$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}')"
+  local ip=""
+  if command -v ip >/dev/null 2>&1; then
+    ip="$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if ($i=="src") {print $(i+1); exit}}' || true)"
+  fi
   echo "${ip:-127.0.0.1}"
 }
 
@@ -69,6 +71,15 @@ start() {
   [[ -n "$NAME" ]] || NAME="$(slug "$(basename "$DIR")")"
   [[ -n "$HOST" ]] || HOST="$(default_host)"
   [[ -n "$PORT" ]] || PORT=8845
+
+  case "$HOST" in
+    0.0.0.0|::|"[::]")
+      echo "refusing wildcard bind $HOST; choose one explicit interface address" >&2
+      exit 2 ;;
+  esac
+  [[ "$PORT" =~ ^[0-9]+$ ]] && (( PORT >= 1 && PORT <= 65535 )) || {
+    echo "invalid port: $PORT" >&2; exit 2;
+  }
 
   if running "$NAME"; then
     echo "already running (pid $(cat "$(pid_file "$NAME")"))"
