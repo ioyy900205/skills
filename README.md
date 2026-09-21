@@ -80,6 +80,24 @@ cp -r skills/experiment-briefing ~/.claude/skills/
 
 只依赖 python3 和标准库，不需要额外安装。
 
+### [project-orchestrator](project-orchestrator/)
+
+把一个长期研发项目在 **主编排 agent、远程开发机、GitHub、Linear、Notion** 之间统一起来，避免同一个项目出现四份互相冲突的状态。
+
+它把 RFUAV 项目里已经跑通的工作方式抽成项目无关规则：
+
+- **主编排 agent 是控制面**：理解目标、拆任务、调度多个执行 agent、核验证据、处理跨系统冲突。
+- **Remote 是执行面**：代码工作树、数据、实验、tmux 和临时日志都在这里真实运行。
+- **GitHub 管工程真相**：代码、配置、branch、commit、PR、CI。
+- **Linear 管工作真相**：milestone、issue、父子/依赖、优先级、状态和验收标准。
+- **Notion 管长期知识**：项目 charter、关键决策、阶段结论、研究笔记和复盘，不复制实时任务看板。
+- **一个任务一个隔离单元**：默认 1 issue = 1 branch = 1 worktree = 1 execution session，适合 A/B/C 多 agent 并行。
+- **近期细、远期粗**：当前阶段拆到可执行，未来阶段保留 gate，避免还没验证前就把 Linear 拆成一棵巨大任务树。
+- **agent 自报不算完成**：必须实际检查产物、测试/评测、git 状态，再更新 Linear。
+- **固定同步顺序**：Remote → GitHub → Linear → 必要时 Notion → 用户状态汇总。
+
+新项目可以从 project-orchestrator/assets/project-context.template.yaml 生成 .project/orchestration.yaml，只替换项目坐标即可复用整套流程；给远程 Claude/Codex 下任务时可使用 work-packet.template.md。
+
 ## 来历
 
 这些 skill 是从真实项目里长出来的，不是凭空设计的——规矩基本对应踩过的坑。

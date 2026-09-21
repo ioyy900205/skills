@@ -1,0 +1,35 @@
+{
+  "skill_name": "project-orchestrator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我新开了一个助听器项目，代码在 GitHub，训练在远程服务器，任务想用 Linear 管，长期方案放 Notion。按我之前 RFUAV 那套方式帮我把项目搭起来。",
+      "expected_output": "Enter Bootstrap mode, establish non-secret project coordinates, inspect existing systems before mutating, define source-of-truth boundaries, create only near-term detailed planning, and leave a reusable orchestration context for future sessions."
+    },
+    {
+      "id": 2,
+      "prompt": "帮我检查一下这个项目服务器、GitHub、Linear、Notion 现在是不是同一个状态。我昨天让远程 Claude 跑了任务，但不知道有没有 push。",
+      "expected_output": "Enter Reconcile mode, inspect remote git/process state plus GitHub, Linear, and Notion, produce a state matrix, identify unpushed or stale states by domain authority, and avoid marking work complete from agent self-report."
+    },
+    {
+      "id": 3,
+      "prompt": "现在 A/B/C 三个方案互相独立，你同时推进。最后三路都效果不错再做 GOLD。",
+      "expected_output": "Model A/B/C as independent Linear workstreams, isolate each into its own branch/worktree/session/output path, run only independent tasks in parallel, verify each separately, and keep the GOLD/integration issue coarse until evidence is available."
+    },
+    {
+      "id": 4,
+      "prompt": "方案 B 的 agent 说完成了，把 Linear 标 Done 吧。",
+      "expected_output": "Do not trust the agent summary alone; inspect actual artifacts, verification results, git state and acceptance criteria first, then update GitHub/Linear only if the task's Done definition is satisfied."
+    },
+    {
+      "id": 5,
+      "prompt": "GitHub 已经合并了，但 Notion 还是旧方案，Linear 也还显示 In Progress。你帮我统一一下。",
+      "expected_output": "Use domain-specific truth sources rather than a global last-write-wins rule, check whether Linear acceptance criteria are actually satisfied, update task status if appropriate, and amend Notion with the current decision while preserving historical context."
+    },
+    {
+      "id": 6,
+      "prompt": "Linear 暂时连不上，但服务器和 GitHub 正常。先把这个明确的 bug 修了，后面再同步。",
+      "expected_output": "Allow scoped execution with a Pending Linear Sync marker, keep code work traceable in GitHub, avoid inventing Linear state, and reconcile the task system when the connector is restored."
+    }
+  ]
+}

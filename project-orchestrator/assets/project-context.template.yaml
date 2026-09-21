@@ -1,0 +1,49 @@
+version: 1
+
+project:
+  name: null
+  objective: null
+  lifecycle: active
+
+orchestrator:
+  mode: main-agent
+  notes: "Main interactive agent coordinates; execution agents do scoped work."
+
+remote:
+  host_alias: null
+  project_root: null
+  default_executor: null
+  worktree_root: null
+  shared_data_roots: []
+
+github:
+  repository: null
+  default_branch: main
+  integration_branch: null
+
+linear:
+  team: null
+  project: null
+  project_id: null
+  current_milestone: null
+
+notion:
+  project_hub_url: null
+  decision_log_url: null
+
+conventions:
+  branch_pattern: "<ISSUE-ID>-<short-slug>"
+  output_pattern: "runs/<ISSUE-ID>/"
+  progressive_elaboration: true
+  one_issue_one_branch: true
+  one_issue_one_worktree: true
+
+source_of_truth:
+  code_and_config: github
+  active_execution: remote
+  tasks_and_dependencies: linear
+  durable_knowledge_and_decisions: notion
+
+security:
+  store_secrets_here: false
+  note: "Never store passwords, API tokens, private keys, cookies, or other credentials in this file."
