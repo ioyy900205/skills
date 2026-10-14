@@ -10,18 +10,20 @@
 
 from __future__ import annotations
 
-import json
 import os
 import re
 import shutil
 import subprocess
 import sys
 import unicodedata
-import urllib.request
 
-# 镜像：国内直连 registry.npmjs.org 实测约 40 KB/s，npmmirror 约 200 KB/s。
-# codex 的平台包 tarball 有 135 MB，走官方源要 40 分钟，走镜像 20 秒。
+# 镜像优先，且镜像必须直连。本机环境变量设了 http(s)_proxy，npm 默认会走它；
+# 2026-09-28 实测经代理访问 npmmirror 只有约 20 KB/s（codex 的元数据要 78 秒，
+# 必然撞上 npm view 的 40 秒超时），直连 6~13 MB/s。codex 平台包 tarball 162 MB。
+# npm 的 --noproxy 按域名后缀匹配：npmmirror.com 同时覆盖 registry.npmmirror.com
+# 和 tarball 实际所在的 cdn.npmmirror.com。注意 --no-proxy（带连字符）关不掉代理。
 NPM_MIRROR = os.environ.get("NPM_MIRROR", "https://registry.npmmirror.com")
+NPM_NOPROXY = os.environ.get("NPM_NOPROXY", "npmmirror.com")
 PIP_MIRROR = os.environ.get("PIP_MIRROR", "https://pypi.tuna.tsinghua.edu.cn/simple")
 
 # 候选注册表：(二进制名, 来源, 包名)
@@ -68,16 +70,24 @@ def current_version(binary: str) -> str:
 
 def latest_version(source: str, pkg: str) -> str:
     if source == "npm":
-        out = run(["npm", "view", pkg, "version", "--registry", NPM_MIRROR], timeout=40)
+        out = run(
+            ["npm", "view", pkg, "version", "--registry", NPM_MIRROR, f"--noproxy={NPM_NOPROXY}"],
+            timeout=40,
+        )
         m = VERSION_RE.search(out)
         return m.group(0) if m else ""
     if source == "pypi":
-        url = f"{PIP_MIRROR.rstrip('/')}/{pkg}/json"
-        try:
-            with urllib.request.urlopen(url, timeout=30) as resp:
-                return json.load(resp)["info"]["version"]
-        except Exception:
-            return ""
+        # 不用镜像的 JSON API：清华的 /pypi/<包>/json 数据陈旧（2026-09-28 aider-chat 在那里
+        # 还是 0.50.1，官方已是 0.86.2），simple 索引才是新的。pip index versions 读的正是
+        # simple 索引、按 PEP 440 排序，结果就是 pip install -U 实际会装的版本。
+        # 输出首行形如 "aider-chat (0.86.2)"。清华经代理不慢，不必绕开代理。
+        # --disable-pip-version-check 省掉 pip 顺带查自身新版的请求：13 秒 -> 8 秒。
+        out = run(
+            ["pip", "index", "versions", pkg, "-i", PIP_MIRROR, "--disable-pip-version-check"],
+            timeout=60,
+        )
+        m = VERSION_RE.search(out)
+        return m.group(0) if m else ""
     return ""
 
 
@@ -144,7 +154,7 @@ def main() -> int:
 
         if source == "npm":
             how = f"npm-global({pkg})"
-            cmd = f"npm install -g {pkg}@latest --registry={NPM_MIRROR}"
+            cmd = f"npm install -g {pkg}@latest --registry={NPM_MIRROR} --noproxy={NPM_NOPROXY}"
         elif source == "pypi":
             how = f"pypi({pkg})"
             cmd = f"pip install -U {pkg} -i {PIP_MIRROR}"
