@@ -53,20 +53,25 @@ cp -r skills/experiment-briefing ~/.claude/skills/
 
 ### [`update-agent-clis`](update-agent-clis/)
 
-更新本机的 agent CLI 工具（Claude Code、Codex、Gemini CLI、dsh 等）——**镜像优先，先探测再动手**。
-国内直连 `registry.npmjs.org` 实测约 40 KB/s，而带原生二进制的 agent CLI 动辄上百 MB，
-选错源就是几十分钟的事。
+更新本机的 agent CLI 工具（Claude Code、Codex、Gemini CLI、dsh 等）——**镜像优先且直连，先探测再动手**。
+带原生二进制的 agent CLI 动辄上百 MB（codex 的平台包 162 MB），走哪条路下载，速度能差几百倍：
+直连 npmmirror 实测 6~13 MB/s，可一旦被 shell 环境变量里的 `http(s)_proxy` 截走，
+就只剩约 20 KB/s，比官方源还慢。
 
 固化的做法：
 
 - **先探测，不急着装。** 先跑只读脚本得到一张表，标着 `已最新` 的工具绝不重装——
-  重装 codex 意味着白下 135 MB，换来的收益是零，还平白引入一次命令失效窗口。
-- **镜像按命令传参，不写全局配置。** `--registry=https://registry.npmmirror.com`
-  只作用于当次安装，不动 `~/.npmrc`，其它 npm 工作流（公司私有源之类）不受影响。
+  重装 codex 意味着白下 162 MB，换来的收益是零，还平白引入一次命令失效窗口。
+- **镜像必须直连。** 光传 `--registry` 不够，npm 默认读环境变量里的代理，请求照样绕道；
+  要再加 `--noproxy=npmmirror.com`，它按域名后缀匹配，tarball 所在的 cdn 子域也一并直连。
+  注意不是 `--no-proxy`：带连字符的那个关不掉环境变量里的代理。
+- **一律按命令传参，不写全局配置。** `--registry` / `--noproxy` 只作用于当次安装，
+  不动 `~/.npmrc` 和 shell 里的 `no_proxy`，其它 npm 工作流（公司私有源之类）不受影响。
   换源前先核对两边的 shasum 一致，确认是同一份文件。
-- **装到一半绝不 kill。** npm 的 reify 阶段会先删掉旧版 bin 软链、再放新的，
-  中断会让 CLI 命令直接消失。卡住时别猜，去看缓存临时文件的字节数是否在涨——
-  在涨就是在下载，等着。
+- **装到一半绝不 kill。** npm 在下载之前就把旧版挪进了隐藏目录，下载期间 CLI 命令是消失的，
+  中断就一直坏着；而且第一次 Ctrl-C / SIGTERM 会被接住，根本停不下来。卡住时别猜：
+  看缓存临时文件涨得多快、`ss -tnp` 看连接有没有走代理。正常下载就等着；
+  被代理拖住的，先直连把大包预取进缓存，再中断重装，全程约一分钟。
 - **不用 `claude update` 更新 npm 装的 claude。** 它会把 `~/.local/bin/claude`
   这种软链误判成第二份独立的 native 安装，可能装出双份来打架。
 - **装完必须验。** 只看 npm 的输出不够：跑 `--version`，再核对 bin 软链时间戳，
@@ -76,9 +81,9 @@ cp -r skills/experiment-briefing ~/.claude/skills/
 
 | 文件 | 作用 |
 |---|---|
-| `scripts/check_agents.py` | 只读探测：当前版本、最新版本、安装方式、建议升级命令。从二进制的真实路径反推包名，比硬编码映射表可信 |
+| `scripts/check_agents.py` | 只读探测：当前版本、最新版本、安装方式、建议升级命令（已带好镜像与直连参数）。从二进制的真实路径反推包名，比硬编码映射表可信；PyPI 最新版用 `pip index versions` 读镜像的 simple 索引，绕开数据陈旧的 JSON API |
 
-只依赖 python3 和标准库，不需要额外安装。
+只依赖 python3 和标准库，不需要额外安装。镜像地址可用环境变量 `NPM_MIRROR` / `NPM_NOPROXY` / `PIP_MIRROR` 覆盖。
 
 ### [project-orchestrator](project-orchestrator/)
 
@@ -108,4 +113,7 @@ cp -r skills/experiment-briefing ~/.claude/skills/
 `update-agent-clis` 同理。它成文于一次更新 codex 的过程：官方源下到 65 MB 时
 估算还要 40 分钟，换镜像后 20 秒装完——于是"镜像优先"成了第一原则。而"绝不中断
 安装"那条是被吓出来的：下载那十几分钟里 `codex` 命令其实是消失状态，因为 npm
-已经先删了旧软链。当时没中断是运气，"不要中断"是事后才想明白的道理。
+已经先把旧版挪走了。当时没中断是运气，"不要中断"是事后才想明白的道理。
+
+第一原则的后半句"镜像必须直连"来自下一次更新：同样走镜像，跑了 20 分钟只下了 27 MB。
+查下来是环境变量里的代理截走了发往镜像的请求，换成直连后 12 秒下完。
