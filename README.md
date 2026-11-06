@@ -1,119 +1,31 @@
-# skills
+# Skills
 
-给 [Claude Code](https://claude.com/claude-code) 用的 skill 集合。
-每个子目录是一个独立的 skill，含 `SKILL.md` 和它需要的脚本与资产。
+可复用的 AI Agent Skill 集合。每个 Skill 独立存放在自己的目录中，入口为 `SKILL.md`，详细原则、脚本和模板由该目录维护。
+
+## Skills
+
+| Skill | 用途 |
+| --- | --- |
+| [business-xray](business-xray/) | 企业价值穿透分析：纵、横、深、估，从财报事实到护城河、现金流与长期投资价值。 |
+| [experiment-briefing](experiment-briefing/) | 将实验结果、项目进展和阶段复盘整理成可追溯的一页汇报。 |
+| [project-orchestrator](project-orchestrator/) | 编排长期研发项目，协调 Agent、远程执行、GitHub、Linear 与 Notion。 |
+| [update-agent-clis](update-agent-clis/) | 检查并更新 Claude Code、Codex 等 Agent CLI，优先使用可靠镜像。 |
 
 ## 安装
 
-拷到 Claude Code 的 skill 目录即可，不需要注册或构建：
+以 Claude Code 为例：
 
 ```bash
 git clone https://github.com/ioyy900205/skills.git
-cp -r skills/experiment-briefing ~/.claude/skills/
+cp -r skills/business-xray ~/.claude/skills/
 ```
 
-放在 `~/.claude/skills/` 下对所有项目生效；只想给某个项目用就放到该项目的
-`.claude/skills/` 下。装好后 Claude 会按 `SKILL.md` 里的描述自动判断何时调用，
-也可以直接让它用某个 skill。
+需要其他 Skill 时，将 `business-xray` 换成对应目录名即可。仅在某个项目中使用时，可安装到该项目的 `.claude/skills/` 目录。
 
-## 目录
+## 使用
 
-### [`experiment-briefing`](experiment-briefing/)
+直接描述任务，或明确指定 Skill，例如：
 
-把实验、评测、分析结果和项目阶段成果做成一页可追溯的汇报 HTML——**同时给领导和给自己看**。
-除了实验结果页，也覆盖项目 status、阶段总结、复盘和 decision brief；领导三十秒拿到结论/状态，自己三个月后仍能追溯每个数字和判断。
-主 `SKILL.md` 只保留触发边界、执行主线和硬规则；细节拆进 `references/` 按需读取，避免每次调用都加载整套说明。
+> 使用 business-xray 分析腾讯的长期盈利能力、护城河与当前估值。
 
-固化的做法：
-
-- **生成器是唯一真相源。** 页面里每个数字都从运行目录读回，不手敲。改页面 = 改脚本，
-  永不手改生成出来的 HTML。手敲的数字会在下一次重跑后变成谎言。
-- **结论先行的章节骨架。** 标题写结论不写主题；KPI 是对比不是孤立数字；
-  每张图后面跟要点列表，其中至少一条是限定或反直觉的。
-- **覆盖全条件，失败照实。** 不做只挑成功的画廊；"没跑成"和"得零分"用不同画法；
-  区分"原理上做不到"和"能改进"——不写清楚，读者会把物理极限记成缺陷。
-- **分清证据强度。** 恒等式拆分能说"占多少"，消融只能说"改掉它会怎样"，
-  后者横着加不起来，不能并排写成一条因果链。
-- **项目汇报也不猜。** 进展、状态、风险、owner、日期和决策都要有来源；未知就显式 TBC/Open Question。
-- **交付一个目录**：页面 + README（起因、来源/as-of、重跑命令、体积、与上版差别）+ 可用的数据导出（CSV/JSON）。
-
-自带的工具：
-
-| 文件 | 作用 |
-|---|---|
-| `assets/report_template.py` | 生成器骨架，拷走换掉 `MARKER` 就能跑 |
-| `assets/report_html.py` | 设计系统、图片内嵌、表格、主题切换 |
-| `assets/charts.py` | 内联 SVG 折线图与二维热图，亮暗两套已验证色阶 |
-| `references/` | 按需加载的页面结构、项目总结/复盘、证据强度、分析 QA、交付与验证细则 |
-| `evals/evals.json` | 真实任务场景，用于后续回归测试 skill 行为 |
-| `scripts/check_page.cjs` | 渲染体检：溢出、外链、tab 失效、暗色对比度、强制主题、JS 报错 |
-| `scripts/serve_report.sh` | 开端口分享，只绑单网卡、只发布报告目录、只读 |
-
-体检脚本需要 playwright：`npm i playwright && npx playwright install chromium`。
-
-### [`update-agent-clis`](update-agent-clis/)
-
-更新本机的 agent CLI 工具（Claude Code、Codex、Gemini CLI、dsh 等）——**镜像优先且直连，先探测再动手**。
-带原生二进制的 agent CLI 动辄上百 MB（codex 的平台包 162 MB），走哪条路下载，速度能差几百倍：
-直连 npmmirror 实测 6~13 MB/s，可一旦被 shell 环境变量里的 `http(s)_proxy` 截走，
-就只剩约 20 KB/s，比官方源还慢。
-
-固化的做法：
-
-- **先探测，不急着装。** 先跑只读脚本得到一张表，标着 `已最新` 的工具绝不重装——
-  重装 codex 意味着白下 162 MB，换来的收益是零，还平白引入一次命令失效窗口。
-- **镜像必须直连。** 光传 `--registry` 不够，npm 默认读环境变量里的代理，请求照样绕道；
-  要再加 `--noproxy=npmmirror.com`，它按域名后缀匹配，tarball 所在的 cdn 子域也一并直连。
-  注意不是 `--no-proxy`：带连字符的那个关不掉环境变量里的代理。
-- **一律按命令传参，不写全局配置。** `--registry` / `--noproxy` 只作用于当次安装，
-  不动 `~/.npmrc` 和 shell 里的 `no_proxy`，其它 npm 工作流（公司私有源之类）不受影响。
-  换源前先核对两边的 shasum 一致，确认是同一份文件。
-- **装到一半绝不 kill。** npm 在下载之前就把旧版挪进了隐藏目录，下载期间 CLI 命令是消失的，
-  中断就一直坏着；而且第一次 Ctrl-C / SIGTERM 会被接住，根本停不下来。卡住时别猜：
-  看缓存临时文件涨得多快、`ss -tnp` 看连接有没有走代理。正常下载就等着；
-  被代理拖住的，先直连把大包预取进缓存，再中断重装，全程约一分钟。
-- **不用 `claude update` 更新 npm 装的 claude。** 它会把 `~/.local/bin/claude`
-  这种软链误判成第二份独立的 native 安装，可能装出双份来打架。
-- **装完必须验。** 只看 npm 的输出不够：跑 `--version`，再核对 bin 软链时间戳，
-  确认没被同一次安装波及。
-
-自带的工具：
-
-| 文件 | 作用 |
-|---|---|
-| `scripts/check_agents.py` | 只读探测：当前版本、最新版本、安装方式、建议升级命令（已带好镜像与直连参数）。从二进制的真实路径反推包名，比硬编码映射表可信；PyPI 最新版用 `pip index versions` 读镜像的 simple 索引，绕开数据陈旧的 JSON API |
-
-只依赖 python3 和标准库，不需要额外安装。镜像地址可用环境变量 `NPM_MIRROR` / `NPM_NOPROXY` / `PIP_MIRROR` 覆盖。
-
-### [project-orchestrator](project-orchestrator/)
-
-把一个长期研发项目在 **主编排 agent、远程开发机、GitHub、Linear、Notion** 之间统一起来，避免同一个项目出现四份互相冲突的状态。
-
-它把 RFUAV 项目里已经跑通的工作方式抽成项目无关规则：
-
-- **主编排 agent 是控制面**：理解目标、拆任务、调度多个执行 agent、核验证据、处理跨系统冲突。
-- **Remote 是执行面**：代码工作树、数据、实验、tmux 和临时日志都在这里真实运行。
-- **GitHub 管工程真相**：代码、配置、branch、commit、PR、CI。
-- **Linear 管工作真相**：milestone、issue、父子/依赖、优先级、状态和验收标准。
-- **Notion 管长期知识**：项目 charter、关键决策、阶段结论、研究笔记和复盘，不复制实时任务看板。
-- **一个任务一个隔离单元**：默认 1 issue = 1 branch = 1 worktree = 1 execution session，适合 A/B/C 多 agent 并行。
-- **近期细、远期粗**：当前阶段拆到可执行，未来阶段保留 gate，避免还没验证前就把 Linear 拆成一棵巨大任务树。
-- **agent 自报不算完成**：必须实际检查产物、测试/评测、git 状态，再更新 Linear。
-- **固定同步顺序**：Remote → GitHub → Linear → 必要时 Notion → 用户状态汇总。
-
-新项目可以从 project-orchestrator/assets/project-context.template.yaml 生成 .project/orchestration.yaml，只替换项目坐标即可复用整套流程；给远程 Claude/Codex 下任务时可使用 work-packet.template.md。
-
-## 来历
-
-这些 skill 是从真实项目里长出来的，不是凭空设计的——规矩基本对应踩过的坑。
-例如"强制主题"那条体检，来自一次真实缺陷：暗色样式只写在
-`@media (prefers-color-scheme: dark)` 里时，切换按钮只能强制亮、不能强制暗，
-而后者恰好是亮色笔记本的读者会碰到的方向。
-
-`update-agent-clis` 同理。它成文于一次更新 codex 的过程：官方源下到 65 MB 时
-估算还要 40 分钟，换镜像后 20 秒装完——于是"镜像优先"成了第一原则。而"绝不中断
-安装"那条是被吓出来的：下载那十几分钟里 `codex` 命令其实是消失状态，因为 npm
-已经先把旧版挪走了。当时没中断是运气，"不要中断"是事后才想明白的道理。
-
-第一原则的后半句"镜像必须直连"来自下一次更新：同样走镜像，跑了 20 分钟只下了 27 MB。
-查下来是环境变量里的代理截走了发往镜像的请求，换成直连后 12 秒下完。
+具体用法与约束请阅读各目录的 `SKILL.md`；研究依据、资产和执行细节保留在 Skill 内，不在首页重复。
